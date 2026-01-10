@@ -241,6 +241,8 @@ spec:
 # =============================================================================
 # INFRAESTRUCTURA - Crossplane (Helm)
 # =============================================================================
+# Crossplane instalado para futuro uso con providers
+# =============================================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -287,82 +289,22 @@ spec:
         factor: 2
         maxDuration: 3m
 
----
 # =============================================================================
-# INFRAESTRUCTURA - Crossplane Providers
+# NOTA: Los providers de Crossplane para Cloudflare están deshabilitados
+# El provider oficial de Upbound para Cloudflare no está disponible actualmente.
+# DNS se configura manualmente en Cloudflare hasta que haya un provider estable.
 # =============================================================================
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: crossplane-providers
-  namespace: argocd
-  labels:
-    app.kubernetes.io/component: infra
-    app.kubernetes.io/part-of: gitops
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  project: default
-  
-  source:
-    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
-    targetRevision: main
-    path: infra/crossplane
-    
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: crossplane-system
-    
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - ServerSideApply=true
-    retry:
-      limit: 5
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m
 
----
-# =============================================================================
-# INFRAESTRUCTURA - DNS Records (Cloudflare via Crossplane)
-# =============================================================================
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: dns-records
-  namespace: argocd
-  labels:
-    app.kubernetes.io/component: infra
-    app.kubernetes.io/part-of: gitops
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  project: default
-  
-  source:
-    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
-    targetRevision: main
-    path: infra/dns
-    
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: crossplane-system
-    
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - ServerSideApply=true
-    retry:
-      limit: 5
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m
+# ---
+# # INFRAESTRUCTURA - Crossplane Providers (DESHABILITADO)
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: crossplane-providers
+#   ...
+
+# ---
+# # INFRAESTRUCTURA - DNS Records (DESHABILITADO)
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
