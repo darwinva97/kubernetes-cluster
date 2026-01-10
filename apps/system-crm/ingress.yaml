@@ -19,8 +19,8 @@ metadata:
     # Traefik ingress config
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    # Descomentar si tienes cert-manager instalado
-    # cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Cert-manager: Genera certificados SSL automáticamente con Let's Encrypt
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: traefik
   tls:
