@@ -1,0 +1,17 @@
+# =============================================================================
+# SYSTEM CRM (SGI) - ConfigMap
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sgi-config
+  namespace: sgi
+  labels:
+    app.kubernetes.io/name: sgi
+    app.kubernetes.io/component: config
+    app.kubernetes.io/managed-by: argocd
+data:
+  NODE_ENV: "production"
+  NEXT_TELEMETRY_DISABLED: "1"
+  NEXT_PUBLIC_APP_URL: "https://sgi.smartperu.tech"
+  BETTER_AUTH_URL: "https://sgi.smartperu.tech"

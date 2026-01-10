@@ -191,3 +191,48 @@ spec:
       kind: Deployment
       jsonPointers:
         - /spec/replicas  # Ignorar si se usa HPA
+---
+# =============================================================================
+# APLICACIONES - System CRM
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: system-crm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: app
+    app.kubernetes.io/part-of: gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  source:
+    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
+    targetRevision: main
+    path: apps/system-crm
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sgi
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
+        
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas

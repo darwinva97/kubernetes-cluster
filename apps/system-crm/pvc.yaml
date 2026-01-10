@@ -1,0 +1,41 @@
+# =============================================================================
+# SYSTEM CRM (SGI) - Persistent Volume Claims
+# =============================================================================
+
+---
+# PVC para archivos de la aplicación
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sgi-files-pvc
+  namespace: sgi
+  labels:
+    app.kubernetes.io/name: sgi
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/managed-by: argocd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-path  # k3s default
+
+---
+# PVC para PostgreSQL
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: sgi
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+    app.kubernetes.io/managed-by: argocd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-path  # k3s default
