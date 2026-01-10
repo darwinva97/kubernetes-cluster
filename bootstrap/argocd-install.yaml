@@ -1,0 +1,145 @@
+# =============================================================================
+# BOOTSTRAP INICIAL DE ARGOCD
+# =============================================================================
+# Este archivo se aplica UNA SOLA VEZ con: kubectl apply -f bootstrap/argocd-install.yaml
+# Después de esto, ArgoCD se autogestiona desde Git.
+# =============================================================================
+
+---
+# Instalación de ArgoCD (versión estable)
+# Usamos el manifest oficial de ArgoCD
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    app.kubernetes.io/managed-by: argocd
+---
+# =============================================================================
+# NOTA: Para producción, descargar el manifest oficial:
+# curl -o argocd-install.yaml https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+# Y concatenar con este archivo.
+#
+# Para este bootstrap, asumimos que ArgoCD ya está instalado o se instalará
+# con el manifest oficial. Este archivo contiene la configuración adicional.
+# =============================================================================
+
+---
+# ConfigMap con configuración de ArgoCD
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Permitir sincronización de recursos fuera del namespace de la app
+  application.resourceTrackingMethod: annotation
+  # Timeout para operaciones
+  timeout.reconciliation: "180s"
+  # Configuración de repositorios (ajustar URL)
+  # repositories: |
+  #   - url: https://github.com/tu-org/gitops.git
+  #     type: git
+
+---
+# ConfigMap de parámetros de ArgoCD
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cmd-params-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Deshabilitar TLS interno (detrás de ingress con TLS)
+  server.insecure: "true"
+  # Timeout de operaciones
+  controller.operation.processors: "10"
+  controller.status.processors: "20"
+
+---
+# RBAC básico - restringir acceso
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-rbac-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Política por defecto: solo lectura
+  policy.default: role:readonly
+  # Política para admin
+  policy.csv: |
+    g, argocd-admins, role:admin
+  scopes: "[groups]"
+
+---
+# =============================================================================
+# ROOT APPLICATION - APP OF APPS
+# =============================================================================
+# Esta es la aplicación raíz que gestiona todas las demás aplicaciones.
+# Se aplica durante el bootstrap y luego se autogestiona.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  # Finalizer para limpieza en cascada
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  source:
+    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
+    targetRevision: main
+    path: clusters/k3s
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+    
+  syncPolicy:
+    automated:
+      prune: true      # Eliminar recursos huérfanos
+      selfHeal: true   # Corregir drift automáticamente
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+        
+  # ⚠️ CRÍTICO: Ignorar campos que causan loops de sincronización
+  ignoreDifferences:
+    - group: ""
+      kind: ConfigMap
+      jsonPointers:
+        - /data
+      name: argocd-cm
+    - group: argoproj.io
+      kind: Application
+      jsonPointers:
+        - /status
+        - /metadata/resourceVersion
+        - /metadata/generation
+        - /metadata/uid
+        - /metadata/creationTimestamp
+        - /metadata/managedFields
+    - group: "*"
+      kind: "*"
+      managedFieldsManagers:
+        - argocd-controller
+        - argocd-application-controller

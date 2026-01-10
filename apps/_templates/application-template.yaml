@@ -1,0 +1,90 @@
+# =============================================================================
+# TEMPLATE DE APPLICATION ARGOCD
+# =============================================================================
+# Usar este template para agregar nuevas aplicaciones
+# Copiar y modificar según necesidades
+# =============================================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  # Nombre único de la aplicación
+  name: MI-APP-NAME
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: app
+    app.kubernetes.io/part-of: gitops
+  # Finalizer para limpieza automática
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # Proyecto de ArgoCD (usar 'default' o crear proyectos específicos)
+  project: default
+  
+  source:
+    # URL del repositorio Git (SSH)
+    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
+    # Branch o tag
+    targetRevision: main
+    # Path dentro del repositorio
+    path: apps/MI-APP-NAME
+    
+    # (Opcional) Si usas Helm:
+    # helm:
+    #   valueFiles:
+    #     - values.yaml
+    #   parameters:
+    #     - name: image.tag
+    #       value: "1.0.0"
+    
+    # (Opcional) Si usas Kustomize:
+    # kustomize:
+    #   images:
+    #     - nginx:1.25
+    
+  destination:
+    # Cluster de destino
+    server: https://kubernetes.default.svc
+    # Namespace de destino
+    namespace: apps
+    
+  syncPolicy:
+    automated:
+      # Eliminar recursos que ya no están en Git
+      prune: true
+      # Corregir cambios manuales en el cluster
+      selfHeal: true
+      # No sincronizar si no hay manifiestos
+      allowEmpty: false
+    syncOptions:
+      # Crear namespace si no existe
+      - CreateNamespace=true
+      # Política de propagación para prune
+      - PrunePropagationPolicy=foreground
+      # Hacer prune al final
+      - PruneLast=true
+      # Validar manifiestos
+      - Validate=true
+      # Respetar ignoreDifferences
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+        
+  # Ignorar diferencias que causan loops
+  ignoreDifferences:
+    # Ignorar cambios de replicas si usas HPA
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    # Ignorar campos autogenerados
+    - group: "*"
+      kind: "*"
+      managedFieldsManagers:
+        - argocd-controller
+        - argocd-application-controller
+        - kube-controller-manager

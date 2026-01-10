@@ -1,0 +1,58 @@
+# =============================================================================
+# CONFIGURACIÓN DE TRAEFIK (INCLUIDO EN K3S)
+# =============================================================================
+# Configuración adicional para el Traefik incluido en k3s
+# =============================================================================
+
+---
+# Middleware para redirect HTTP a HTTPS
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-https
+  namespace: kube-system
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+
+---
+# Middleware para headers de seguridad
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: security-headers
+  namespace: kube-system
+spec:
+  headers:
+    frameDeny: true
+    contentTypeNosniff: true
+    browserXssFilter: true
+    referrerPolicy: "strict-origin-when-cross-origin"
+    customResponseHeaders:
+      X-Content-Type-Options: "nosniff"
+      X-Frame-Options: "DENY"
+      X-XSS-Protection: "1; mode=block"
+
+---
+# Middleware para rate limiting
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rate-limit
+  namespace: kube-system
+spec:
+  rateLimit:
+    average: 100
+    burst: 50
+
+---
+# IngressClass para Traefik (si no existe)
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: traefik
+  annotations:
+    ingressclass.kubernetes.io/is-default-class: "true"
+spec:
+  controller: traefik.io/ingress-controller

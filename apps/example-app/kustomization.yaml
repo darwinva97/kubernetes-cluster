@@ -1,0 +1,15 @@
+# =============================================================================
+# Kustomization para Example App
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: apps
+
+resources:
+  - deployment.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: example-app
+  app.kubernetes.io/managed-by: argocd

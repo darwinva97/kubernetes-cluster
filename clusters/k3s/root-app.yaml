@@ -1,0 +1,193 @@
+# =============================================================================
+# ROOT APP OF APPS - CLUSTER K3S
+# =============================================================================
+# Este archivo define todas las aplicaciones que ArgoCD debe gestionar.
+# Es el punto de entrada único para todo el cluster.
+# =============================================================================
+
+---
+# =============================================================================
+# INFRAESTRUCTURA - ArgoCD (autogestionado)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: infra
+    app.kubernetes.io/part-of: gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  source:
+    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
+    targetRevision: main
+    path: infra/argocd
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false  # Namespace ya existe
+      - RespectIgnoreDifferences=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
+        
+  ignoreDifferences:
+    # Ignorar campos de estado y metadata autogenerados
+    - group: ""
+      kind: Secret
+      jsonPointers:
+        - /data
+      name: argocd-initial-admin-secret
+    - group: ""
+      kind: ConfigMap
+      jsonPointers:
+        - /metadata/annotations
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    # Ignorar managedFields de todos los recursos
+    - group: "*"
+      kind: "*"
+      managedFieldsManagers:
+        - argocd-controller
+        - argocd-application-controller
+        - kube-controller-manager
+
+---
+# =============================================================================
+# INFRAESTRUCTURA - Namespaces
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: namespaces
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: infra
+    app.kubernetes.io/part-of: gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  source:
+    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
+    targetRevision: main
+    path: infra/namespaces
+    
+  destination:
+    server: https://kubernetes.default.svc
+    # No namespace específico - los namespaces son cluster-scoped
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - PruneLast=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
+
+---
+# =============================================================================
+# INFRAESTRUCTURA - Ingress Configuration
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ingress-config
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: infra
+    app.kubernetes.io/part-of: gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  source:
+    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
+    targetRevision: main
+    path: infra/ingress
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
+
+---
+# =============================================================================
+# APLICACIONES - Example App
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: example-app
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: app
+    app.kubernetes.io/part-of: gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  source:
+    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
+    targetRevision: main
+    path: apps/example-app
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: apps
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
+        
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Ignorar si se usa HPA

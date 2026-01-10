@@ -1,0 +1,82 @@
+# =============================================================================
+# NAMESPACES DEL CLUSTER
+# =============================================================================
+# Todos los namespaces gestionados por GitOps
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apps
+  labels:
+    app.kubernetes.io/managed-by: argocd
+    environment: production
+  annotations:
+    description: "Aplicaciones de producción"
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apps-staging
+  labels:
+    app.kubernetes.io/managed-by: argocd
+    environment: staging
+  annotations:
+    description: "Aplicaciones de staging"
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    app.kubernetes.io/managed-by: argocd
+    environment: infra
+  annotations:
+    description: "Stack de monitoreo (Prometheus, Grafana)"
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: logging
+  labels:
+    app.kubernetes.io/managed-by: argocd
+    environment: infra
+  annotations:
+    description: "Stack de logging (Loki, Promtail)"
+
+---
+# ResourceQuota para namespace apps
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: apps-quota
+  namespace: apps
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: 8Gi
+    limits.cpu: "8"
+    limits.memory: 16Gi
+    pods: "50"
+    services: "20"
+
+---
+# LimitRange para namespace apps
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: apps-limits
+  namespace: apps
+spec:
+  limits:
+    - default:
+        cpu: 500m
+        memory: 512Mi
+      defaultRequest:
+        cpu: 100m
+        memory: 128Mi
+      type: Container

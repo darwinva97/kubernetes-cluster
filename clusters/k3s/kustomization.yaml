@@ -1,0 +1,16 @@
+# =============================================================================
+# Kustomization para el cluster k3s
+# =============================================================================
+# ArgoCD detectará automáticamente este archivo y aplicará los recursos.
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - root-app.yaml
+
+# Labels comunes para todos los recursos
+commonLabels:
+  cluster: k3s
+  managed-by: argocd
