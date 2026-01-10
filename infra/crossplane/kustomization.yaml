@@ -10,7 +10,8 @@ resources:
   # El Helm chart se instala via ArgoCD Application separada
   # - crossplane-helm.yaml  # Este va en root-app.yaml
   - provider-cloudflare.yaml
-  - provider-config.yaml
+  # provider-config.yaml se aplica después de que el Provider esté listo
+  # - provider-config.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: crossplane
