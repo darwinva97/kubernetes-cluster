@@ -1,0 +1,38 @@
+# =============================================================================
+# SYSTEM CRM (SGI) - Database Seed Job
+# =============================================================================
+# Ejecutar manualmente: kubectl apply -f seed-job.yaml
+# Luego eliminar: kubectl delete -f seed-job.yaml
+# =============================================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sgi-seed
+  namespace: sgi
+  labels:
+    app.kubernetes.io/name: sgi
+    app.kubernetes.io/component: seed
+spec:
+  ttlSecondsAfterFinished: 300  # Auto-delete después de 5 minutos
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: seed
+          image: ghcr.io/darwinva97/system-crm-migrate:latest
+          imagePullPolicy: Always
+          command: ["pnpm", "db:seed"]
+          envFrom:
+            - configMapRef:
+                name: sgi-config
+            - secretRef:
+                name: sgi-secrets
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
