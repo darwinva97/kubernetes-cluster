@@ -40,6 +40,21 @@ spec:
         - name: wait-for-postgres
           image: busybox:1.36
           command: ['sh', '-c', 'until nc -z postgres.sgi.svc.cluster.local 5432; do echo waiting for postgres; sleep 2; done;']
+        - name: db-migrate
+          image: ghcr.io/darwinva97/system-crm-migrate:latest
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: sgi-config
+            - secretRef:
+                name: sgi-secrets
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
       containers:
         - name: sgi
           image: ghcr.io/darwinva97/system-crm:latest
