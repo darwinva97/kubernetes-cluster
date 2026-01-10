@@ -13,6 +13,10 @@ metadata:
     app.kubernetes.io/component: ingress
     app.kubernetes.io/managed-by: argocd
   annotations:
+    # External-DNS: Crea automáticamente el registro DNS en Cloudflare
+    external-dns.alpha.kubernetes.io/hostname: sgi.smartperu.tech
+    external-dns.alpha.kubernetes.io/ttl: "120"
+    # Traefik ingress config
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     # Descomentar si tienes cert-manager instalado

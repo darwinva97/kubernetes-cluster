@@ -239,6 +239,47 @@ spec:
 
 ---
 # =============================================================================
+# INFRAESTRUCTURA - External-DNS (Cloudflare)
+# =============================================================================
+# Sincroniza automáticamente los Ingress con registros DNS de Cloudflare
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: infra
+    app.kubernetes.io/part-of: gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  source:
+    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
+    targetRevision: main
+    path: infra/external-dns
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-dns
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
+
+---
+# =============================================================================
 # INFRAESTRUCTURA - Crossplane (Helm)
 # =============================================================================
 # Crossplane instalado para futuro uso con providers
