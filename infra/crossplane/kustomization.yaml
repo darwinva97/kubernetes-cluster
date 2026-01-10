@@ -1,0 +1,17 @@
+# =============================================================================
+# Kustomization para Crossplane
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  # El Helm chart se instala via ArgoCD Application separada
+  # - crossplane-helm.yaml  # Este va en root-app.yaml
+  - provider-cloudflare.yaml
+  - provider-config.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: crossplane
+  app.kubernetes.io/managed-by: argocd

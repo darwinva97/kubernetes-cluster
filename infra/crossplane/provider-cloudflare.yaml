@@ -1,0 +1,29 @@
+# =============================================================================
+# CROSSPLANE - Cloudflare Provider
+# =============================================================================
+# Este provider permite gestionar recursos de Cloudflare desde Kubernetes
+# =============================================================================
+
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-cloudflare
+spec:
+  package: xpkg.upbound.io/cloudflare/provider-cloudflare:v0.2.0
+  controllerConfigRef:
+    name: provider-cloudflare-config
+
+---
+apiVersion: pkg.crossplane.io/v1alpha1
+kind: ControllerConfig
+metadata:
+  name: provider-cloudflare-config
+spec:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi

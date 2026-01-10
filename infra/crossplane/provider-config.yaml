@@ -1,0 +1,24 @@
+# =============================================================================
+# CROSSPLANE - Cloudflare Credentials
+# =============================================================================
+# ⚠️ IMPORTANTE: El API Token se crea manualmente con:
+#
+# kubectl create secret generic cloudflare-credentials \
+#   --namespace crossplane-system \
+#   --from-literal=api-token=<TU_CLOUDFLARE_API_TOKEN>
+#
+# Luego aplicar el ProviderConfig
+# =============================================================================
+
+---
+apiVersion: cloudflare.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: cloudflare-provider
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: cloudflare-credentials
+      key: api-token

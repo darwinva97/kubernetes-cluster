@@ -236,3 +236,133 @@ spec:
       kind: Deployment
       jsonPointers:
         - /spec/replicas
+
+---
+# =============================================================================
+# INFRAESTRUCTURA - Crossplane (Helm)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crossplane
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: infra
+    app.kubernetes.io/part-of: gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  source:
+    repoURL: https://charts.crossplane.io/stable
+    chart: crossplane
+    targetRevision: 1.14.5
+    helm:
+      values: |
+        replicas: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crossplane-system
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+---
+# =============================================================================
+# INFRAESTRUCTURA - Crossplane Providers
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crossplane-providers
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: infra
+    app.kubernetes.io/part-of: gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  source:
+    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
+    targetRevision: main
+    path: infra/crossplane
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crossplane-system
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+---
+# =============================================================================
+# INFRAESTRUCTURA - DNS Records (Cloudflare via Crossplane)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dns-records
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: infra
+    app.kubernetes.io/part-of: gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  source:
+    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
+    targetRevision: main
+    path: infra/dns
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crossplane-system
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

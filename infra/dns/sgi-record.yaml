@@ -1,0 +1,23 @@
+# =============================================================================
+# DNS Records managed by Crossplane
+# =============================================================================
+# Estos registros DNS se crean automáticamente en Cloudflare
+# =============================================================================
+
+---
+apiVersion: dns.cloudflare.upbound.io/v1alpha1
+kind: Record
+metadata:
+  name: sgi-smartperu-tech
+  namespace: crossplane-system
+spec:
+  forProvider:
+    zoneId: "9bea4537335b85134cfebbcb8bda5883"
+    name: "sgi"
+    type: "A"
+    # IP del cluster (usar una de las IPs del ingress)
+    value: "116.203.117.170"
+    proxied: true  # Usar proxy de Cloudflare (SSL automático)
+    ttl: 1  # Auto cuando proxied=true
+  providerConfigRef:
+    name: cloudflare-provider

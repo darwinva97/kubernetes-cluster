@@ -1,0 +1,19 @@
+# =============================================================================
+# CROSSPLANE - Installation via Helm
+# =============================================================================
+# Crossplane permite gestionar recursos externos (Cloudflare, AWS, etc.)
+# desde Kubernetes usando CRDs
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: crossplane-system
+  labels:
+    app.kubernetes.io/name: crossplane
+    app.kubernetes.io/managed-by: argocd
+
+---
+# Usamos el chart de Helm de Crossplane
+# ArgoCD lo instalará automáticamente
