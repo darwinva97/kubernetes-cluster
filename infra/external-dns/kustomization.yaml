@@ -3,6 +3,8 @@ kind: Kustomization
 
 resources:
   - namespace.yaml
-  - secret.yaml
+  # Secret se crea manualmente con el token real de Cloudflare
+  # kubectl create secret generic cloudflare-api-token -n external-dns --from-literal=api-token=<TOKEN>
+  # - secret.yaml
   - rbac.yaml
   - deployment.yaml
