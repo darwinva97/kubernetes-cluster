@@ -1,0 +1,35 @@
+# =============================================================================
+# OpenProject - Configuration
+# =============================================================================
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openproject-config
+  namespace: openproject
+  labels:
+    app.kubernetes.io/name: openproject
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: openproject
+    app.kubernetes.io/managed-by: argocd
+data:
+  # Database configuration
+  DATABASE_URL: "postgres://openproject:openproject-secret-2024@postgres.openproject.svc.cluster.local:5432/openproject"
+
+  # Application settings
+  OPENPROJECT_HOST__NAME: "openproject.smartperu.tech"
+  OPENPROJECT_HTTPS: "true"
+  OPENPROJECT_HSTS: "true"
+
+  # Rails environment
+  RAILS_ENV: "production"
+
+  # Cache configuration (using internal memcache)
+  RAILS_CACHE_STORE: "file_store"
+
+  # Disable IMAP email fetching (can be enabled later if needed)
+  IMAP_ENABLED: "false"
+
+  # Logging
+  OPENPROJECT_LOG__LEVEL: "info"

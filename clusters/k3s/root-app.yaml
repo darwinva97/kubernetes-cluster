@@ -331,6 +331,52 @@ spec:
 
 ---
 # =============================================================================
+# APLICACIONES - OpenProject
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openproject
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: app
+    app.kubernetes.io/part-of: gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
+    targetRevision: main
+    path: apps/openproject
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openproject
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+
+---
+# =============================================================================
 # INFRAESTRUCTURA - External-DNS (Cloudflare)
 # =============================================================================
 # Sincroniza automáticamente los Ingress con registros DNS de Cloudflare

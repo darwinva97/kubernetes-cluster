@@ -1,0 +1,41 @@
+# =============================================================================
+# OpenProject - Ingress
+# =============================================================================
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openproject
+  namespace: openproject
+  labels:
+    app.kubernetes.io/name: openproject
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: openproject
+    app.kubernetes.io/managed-by: argocd
+  annotations:
+    # External-DNS: Crea automaticamente el registro DNS en Cloudflare
+    external-dns.alpha.kubernetes.io/hostname: openproject.smartperu.tech
+    external-dns.alpha.kubernetes.io/ttl: "120"
+    # Traefik ingress config
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    # Cert-manager: Genera certificados SSL automaticamente con Let's Encrypt
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - openproject.smartperu.tech
+      secretName: openproject-tls
+  rules:
+    - host: openproject.smartperu.tech
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: openproject
+                port:
+                  name: http

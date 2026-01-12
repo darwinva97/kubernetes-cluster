@@ -1,0 +1,43 @@
+# =============================================================================
+# OpenProject - Persistent Volume Claims
+# =============================================================================
+
+---
+# PVC para datos de OpenProject (assets, attachments, etc.)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openproject-data-pvc
+  namespace: openproject
+  labels:
+    app.kubernetes.io/name: openproject
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: openproject
+    app.kubernetes.io/managed-by: argocd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-path
+
+---
+# PVC para PostgreSQL
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openproject-postgres-pvc
+  namespace: openproject
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: openproject
+    app.kubernetes.io/managed-by: argocd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-path

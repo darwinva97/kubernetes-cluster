@@ -1,0 +1,11 @@
+# =============================================================================
+# OpenProject - Namespace
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openproject
+  labels:
+    app.kubernetes.io/name: openproject
+    app.kubernetes.io/part-of: openproject
+    app.kubernetes.io/managed-by: argocd

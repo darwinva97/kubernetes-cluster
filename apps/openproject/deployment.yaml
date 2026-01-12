@@ -1,0 +1,110 @@
+# =============================================================================
+# OpenProject - Main Application Deployment
+# =============================================================================
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openproject
+  namespace: openproject
+  labels:
+    app.kubernetes.io/name: openproject
+    app.kubernetes.io/component: application
+    app.kubernetes.io/part-of: openproject
+    app.kubernetes.io/managed-by: argocd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openproject
+  strategy:
+    type: Recreate  # OpenProject requiere acceso exclusivo a los datos
+  template:
+    metadata:
+      labels:
+        app: openproject
+        app.kubernetes.io/name: openproject
+        app.kubernetes.io/component: application
+    spec:
+      initContainers:
+        # Esperar a que PostgreSQL esté listo
+        - name: wait-for-postgres
+          image: postgres:13-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres.openproject.svc.cluster.local -p 5432 -U openproject; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "10m"
+            limits:
+              memory: "64Mi"
+              cpu: "50m"
+      containers:
+        - name: openproject
+          image: openproject/openproject:14
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: openproject-config
+            - secretRef:
+                name: openproject-secrets
+          volumeMounts:
+            - name: openproject-data
+              mountPath: /var/openproject/assets
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health_checks/default
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health_checks/default
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: openproject-data
+          persistentVolumeClaim:
+            claimName: openproject-data-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openproject
+  namespace: openproject
+  labels:
+    app.kubernetes.io/name: openproject
+    app.kubernetes.io/component: application
+    app.kubernetes.io/part-of: openproject
+    app.kubernetes.io/managed-by: argocd
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: http
+      name: http
+  selector:
+    app: openproject
