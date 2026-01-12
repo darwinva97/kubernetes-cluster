@@ -72,10 +72,10 @@ spec:
             httpGet:
               path: /health_checks/default
               port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
+            initialDelaySeconds: 60
+            periodSeconds: 15
             timeoutSeconds: 5
-            failureThreshold: 30  # 30 * 10s = 5 minutos para iniciar
+            failureThreshold: 60  # 60 * 15s = 15 minutos para iniciar (primera vez incluye db:seed)
           livenessProbe:
             httpGet:
               path: /health_checks/default
