@@ -1,0 +1,13 @@
+# =============================================================================
+# NAMESPACE - Databases
+# =============================================================================
+# Namespace dedicado para bases de datos genéricas compartidas
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: databases
+  labels:
+    app.kubernetes.io/name: databases
+    app.kubernetes.io/managed-by: argocd
+    environment: production
