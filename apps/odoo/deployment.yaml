@@ -1,0 +1,144 @@
+# =============================================================================
+# Odoo - Main Application Deployment
+# =============================================================================
+# Odoo ERP conectado a PostgreSQL genérico (databases namespace)
+# Base de datos: odoo-activalegal
+# Expuesto en: https://mkt.activacapital.pe
+# =============================================================================
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odoo
+  namespace: odoo
+  labels:
+    app.kubernetes.io/name: odoo
+    app.kubernetes.io/component: application
+    app.kubernetes.io/part-of: odoo
+    app.kubernetes.io/managed-by: argocd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: odoo
+  strategy:
+    type: Recreate  # Odoo requiere acceso exclusivo a los datos
+  template:
+    metadata:
+      labels:
+        app: odoo
+        app.kubernetes.io/name: odoo
+        app.kubernetes.io/component: application
+    spec:
+      # Node affinity para ejecutar en el nodo worker de Hostinger
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-type
+                    operator: In
+                    values:
+                      - hostinger-worker
+      initContainers:
+        # Esperar a que PostgreSQL esté listo
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgresql.databases.svc.cluster.local -p 5432 -U postgres; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "10m"
+            limits:
+              memory: "64Mi"
+              cpu: "50m"
+      containers:
+        - name: odoo
+          image: odoo:17
+          ports:
+            - containerPort: 8069
+              name: http
+            - containerPort: 8072
+              name: longpolling
+          env:
+            # Filtrar para mostrar solo esta base de datos
+            - name: DB_FILTER
+              value: "^odoo-activalegal$"
+          envFrom:
+            - configMapRef:
+                name: odoo-config
+            - secretRef:
+                name: odoo-secrets
+          volumeMounts:
+            - name: odoo-data
+              mountPath: /var/lib/odoo
+            - name: odoo-addons
+              mountPath: /mnt/extra-addons
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          startupProbe:
+            httpGet:
+              path: /web/health
+              port: 8069
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30  # 30 * 10s = 5 minutos para iniciar
+          livenessProbe:
+            httpGet:
+              path: /web/health
+              port: 8069
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /web/health
+              port: 8069
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: odoo-data
+          persistentVolumeClaim:
+            claimName: odoo-data-pvc
+        - name: odoo-addons
+          persistentVolumeClaim:
+            claimName: odoo-addons-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: odoo
+  namespace: odoo
+  labels:
+    app.kubernetes.io/name: odoo
+    app.kubernetes.io/component: application
+    app.kubernetes.io/part-of: odoo
+    app.kubernetes.io/managed-by: argocd
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8069
+      targetPort: http
+      name: http
+    - port: 8072
+      targetPort: longpolling
+      name: longpolling
+  selector:
+    app: odoo

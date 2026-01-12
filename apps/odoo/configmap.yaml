@@ -1,0 +1,23 @@
+# =============================================================================
+# Odoo - ConfigMap
+# =============================================================================
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: odoo-config
+  namespace: odoo
+  labels:
+    app.kubernetes.io/name: odoo
+    app.kubernetes.io/component: application
+    app.kubernetes.io/part-of: odoo
+    app.kubernetes.io/managed-by: argocd
+data:
+  # Database connection (PostgreSQL genérico en namespace databases)
+  HOST: "postgresql.databases.svc.cluster.local"
+  PORT: "5432"
+  # Nombre de la base de datos (ya creada vacía en PostgreSQL)
+  # Odoo la inicializará automáticamente en el primer arranque
+  # Proxy mode para funcionar detrás de Traefik
+  PROXY_MODE: "true"

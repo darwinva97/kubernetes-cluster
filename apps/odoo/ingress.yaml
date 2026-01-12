@@ -1,0 +1,49 @@
+# =============================================================================
+# Odoo - Ingress
+# =============================================================================
+# Expone Odoo en https://mkt.activacapital.pe
+# SSL/TLS automático con cert-manager (Let's Encrypt)
+# =============================================================================
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: odoo
+  namespace: odoo
+  labels:
+    app.kubernetes.io/name: odoo
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: odoo
+    app.kubernetes.io/managed-by: argocd
+  annotations:
+    # Cert-manager: Genera certificados Let's Encrypt automáticamente
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Traefik: Configuración
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - mkt.activacapital.pe
+      secretName: odoo-tls
+  rules:
+    - host: mkt.activacapital.pe
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: odoo
+                port:
+                  name: http
+          # Longpolling para live chat y notificaciones
+          - path: /longpolling
+            pathType: Prefix
+            backend:
+              service:
+                name: odoo
+                port:
+                  name: longpolling
