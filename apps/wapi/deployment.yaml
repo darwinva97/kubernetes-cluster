@@ -1,0 +1,102 @@
+# =============================================================================
+# WAPI - Main Application Deployment
+# =============================================================================
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wapi
+  namespace: wapi
+  labels:
+    app.kubernetes.io/name: wapi
+    app.kubernetes.io/component: application
+    app.kubernetes.io/part-of: wapi
+    app.kubernetes.io/managed-by: argocd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wapi
+  strategy:
+    type: Recreate  # SQLite requiere acceso exclusivo
+  template:
+    metadata:
+      labels:
+        app: wapi
+        app.kubernetes.io/name: wapi
+        app.kubernetes.io/component: application
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: wapi
+          image: ghcr.io/darwinva97/wapi:latest
+          ports:
+            - containerPort: 3000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: wapi-config
+            - secretRef:
+                name: wapi-secrets
+          volumeMounts:
+            - name: wapi-data
+              mountPath: /app/data
+            - name: wapi-media
+              mountPath: /app/public/media
+            - name: wapi-sessions
+              mountPath: /app/.wwebjs_auth
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        - name: wapi-data
+          persistentVolumeClaim:
+            claimName: wapi-data-pvc
+        - name: wapi-media
+          persistentVolumeClaim:
+            claimName: wapi-media-pvc
+        - name: wapi-sessions
+          persistentVolumeClaim:
+            claimName: wapi-sessions-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wapi
+  namespace: wapi
+  labels:
+    app.kubernetes.io/name: wapi
+    app.kubernetes.io/component: application
+    app.kubernetes.io/part-of: wapi
+    app.kubernetes.io/managed-by: argocd
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: http
+      name: http
+  selector:
+    app: wapi

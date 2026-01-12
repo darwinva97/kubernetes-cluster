@@ -1,0 +1,11 @@
+# =============================================================================
+# WAPI - Namespace
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wapi
+  labels:
+    app.kubernetes.io/name: wapi
+    app.kubernetes.io/part-of: wapi
+    app.kubernetes.io/managed-by: argocd

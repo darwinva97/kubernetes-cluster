@@ -1,0 +1,25 @@
+# =============================================================================
+# WAPI - Configuration
+# =============================================================================
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wapi-config
+  namespace: wapi
+  labels:
+    app.kubernetes.io/name: wapi
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: wapi
+    app.kubernetes.io/managed-by: argocd
+data:
+  # Database configuration (SQLite local)
+  DATABASE_URL: "file:/app/data/wapi.db"
+
+  # Application settings
+  BETTER_AUTH_URL: "https://wapi.smartperu.tech"
+  NODE_ENV: "production"
+
+  # Next.js settings
+  NEXT_TELEMETRY_DISABLED: "1"

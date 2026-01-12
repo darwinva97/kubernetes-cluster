@@ -1,0 +1,63 @@
+# =============================================================================
+# WAPI - Persistent Volume Claims
+# =============================================================================
+
+---
+# PVC para base de datos SQLite
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wapi-data-pvc
+  namespace: wapi
+  labels:
+    app.kubernetes.io/name: wapi
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: wapi
+    app.kubernetes.io/managed-by: argocd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-path
+
+---
+# PVC para archivos media (imagenes, documentos, etc.)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wapi-media-pvc
+  namespace: wapi
+  labels:
+    app.kubernetes.io/name: wapi
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: wapi
+    app.kubernetes.io/managed-by: argocd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-path
+
+---
+# PVC para sesiones de WhatsApp (Baileys auth)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wapi-sessions-pvc
+  namespace: wapi
+  labels:
+    app.kubernetes.io/name: wapi
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: wapi
+    app.kubernetes.io/managed-by: argocd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-path
