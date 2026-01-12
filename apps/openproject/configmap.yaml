@@ -33,3 +33,6 @@ data:
 
   # Logging
   OPENPROJECT_LOG__LEVEL: "info"
+
+  # Disable demo data seeding (speeds up startup significantly)
+  OPENPROJECT_SEED__DEMO__DATA: "false"
