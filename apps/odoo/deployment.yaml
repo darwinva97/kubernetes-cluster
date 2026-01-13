@@ -64,15 +64,27 @@ spec:
       containers:
         - name: odoo
           image: odoo:17
+          # Inicializar la base de datos si no existe, luego iniciar normalmente
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+              # Inicializar DB si está vacía
+              if ! psql -h $HOST -p $PORT -U $USER -d odoo-activalegal -c '\dt' 2>/dev/null | grep -q 'ir_model'; then
+                echo "Initializing database odoo-activalegal..."
+                odoo -i base -d odoo-activalegal --stop-after-init --db_host=$HOST --db_port=$PORT --db_user=$USER --db_password=$PASSWORD
+              fi
+              # Iniciar Odoo normalmente
+              exec odoo -d odoo-activalegal --db_host=$HOST --db_port=$PORT --db_user=$USER --db_password=$PASSWORD
           ports:
             - containerPort: 8069
               name: http
             - containerPort: 8072
               name: longpolling
           env:
-            # Filtrar para mostrar solo esta base de datos (deshabilitado durante inicialización)
-            # - name: DB_FILTER
-            #   value: "^odoo-activalegal$"
+            # Filtrar para mostrar solo esta base de datos
+            - name: DB_FILTER
+              value: "^odoo-activalegal$"
           envFrom:
             - configMapRef:
                 name: odoo-config

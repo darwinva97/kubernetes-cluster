@@ -17,7 +17,5 @@ data:
   # Database connection (PostgreSQL genérico en namespace databases)
   HOST: "postgresql.databases.svc.cluster.local"
   PORT: "5432"
-  # Nombre de la base de datos
-  DATABASE: "odoo-activalegal"
   # Proxy mode para funcionar detrás de Traefik
   PROXY_MODE: "true"
