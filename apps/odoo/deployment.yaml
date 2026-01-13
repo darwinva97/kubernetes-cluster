@@ -70,9 +70,9 @@ spec:
             - containerPort: 8072
               name: longpolling
           env:
-            # Filtrar para mostrar solo esta base de datos
-            - name: DB_FILTER
-              value: "^odoo-activalegal$"
+            # Filtrar para mostrar solo esta base de datos (deshabilitado durante inicialización)
+            # - name: DB_FILTER
+            #   value: "^odoo-activalegal$"
           envFrom:
             - configMapRef:
                 name: odoo-config
