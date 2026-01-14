@@ -86,8 +86,14 @@ metadata:
     app.kubernetes.io/name: postgresql
     app.kubernetes.io/component: database
     app.kubernetes.io/part-of: databases
+  annotations:
+    # External-DNS: Crea automáticamente el registro DNS en Cloudflare
+    external-dns.alpha.kubernetes.io/hostname: postgres.database.connections.smartperu.tech
+    external-dns.alpha.kubernetes.io/ttl: "300"
+    # Cloudflare: No usar proxy para TCP (solo funciona para HTTP/HTTPS)
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
     - port: 5432
       targetPort: 5432

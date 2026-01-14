@@ -1,0 +1,31 @@
+# =============================================================================
+# DNS Record - PostgreSQL Database
+# =============================================================================
+# Registro DNS para acceso público a PostgreSQL
+# Gestionado por Crossplane + Cloudflare Provider
+# =============================================================================
+
+---
+apiVersion: dns.cloudflare.upbound.io/v1alpha1
+kind: Record
+metadata:
+  name: postgres-database-connections
+  namespace: crossplane-system
+  labels:
+    app.kubernetes.io/name: postgres-dns
+    app.kubernetes.io/component: dns
+    app.kubernetes.io/part-of: databases
+    app.kubernetes.io/managed-by: argocd
+spec:
+  forProvider:
+    zoneId: "9bea4537335b85134cfebbcb8bda5883"
+    name: "postgres.database.connections"
+    type: "A"
+    # IP del cluster - será actualizada por external-dns automáticamente
+    # Este registro actúa como backup/documentación
+    value: "116.203.117.170"
+    # IMPORTANTE: proxied=false para TCP (PostgreSQL no es HTTP)
+    proxied: false
+    ttl: 300
+  providerConfigRef:
+    name: cloudflare-provider
