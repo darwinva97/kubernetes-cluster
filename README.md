@@ -68,3 +68,65 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 4. Agregar referencia en `clusters/k3s/root-app.yaml` o crear ApplicationSet
 5. `git commit && git push`
 6. ArgoCD detecta y aplica automáticamente
+
+## MinIO - Object Storage S3-Compatible
+
+El cluster incluye MinIO como almacenamiento de objetos S3-compatible, útil para:
+- Backend de estado de Pulumi/Terraform
+- Almacenamiento de archivos para aplicaciones
+- Backups
+
+### URLs de Acceso
+
+| URL | Uso |
+|-----|-----|
+| `https://minio.smartperu.tech` | Console Web (UI) |
+| `https://s3.smartperu.tech` | API S3 |
+
+### Credenciales
+
+- **Usuario:** `minioadmin`
+- **Password:** `minio-secret-2024-k3s`
+
+### Usar MinIO con Pulumi
+
+#### 1. Crear bucket para estado
+
+Accede a `https://minio.smartperu.tech`, inicia sesión y crea un bucket llamado `pulumi-state`.
+
+#### 2. Configurar Pulumi
+
+```bash
+# Opción A: Login directo con URL S3
+pulumi login 's3://pulumi-state?endpoint=s3.smartperu.tech&disableSSL=false&s3ForcePathStyle=true'
+
+# Opción B: Usando variables de entorno
+export AWS_ACCESS_KEY_ID=minioadmin
+export AWS_SECRET_ACCESS_KEY=minio-secret-2024-k3s
+export AWS_REGION=us-east-1
+pulumi login 's3://pulumi-state?endpoint=s3.smartperu.tech&disableSSL=false&s3ForcePathStyle=true'
+```
+
+#### 3. Crear nuevo proyecto Pulumi
+
+```bash
+# Crear proyecto (el estado se guarda en MinIO)
+pulumi new typescript
+
+# Verificar que el estado está en MinIO
+pulumi stack ls
+```
+
+### Usar MinIO con AWS CLI / mc
+
+```bash
+# Con AWS CLI
+aws configure set aws_access_key_id minioadmin
+aws configure set aws_secret_access_key minio-secret-2024-k3s
+aws --endpoint-url https://s3.smartperu.tech s3 ls
+
+# Con MinIO Client (mc)
+mc alias set myminio https://s3.smartperu.tech minioadmin minio-secret-2024-k3s
+mc ls myminio
+mc mb myminio/pulumi-state
+```

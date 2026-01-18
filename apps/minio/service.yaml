@@ -1,0 +1,30 @@
+# =============================================================================
+# SERVICE - MinIO
+# =============================================================================
+# Expone MinIO API (S3) y Console dentro del cluster
+# =============================================================================
+
+---
+# Service para API S3 (usado por Pulumi y otras apps)
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: minio
+  labels:
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: minio
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: minio
+  ports:
+    - name: api
+      port: 9000
+      targetPort: api
+      protocol: TCP
+    - name: console
+      port: 9001
+      targetPort: console
+      protocol: TCP

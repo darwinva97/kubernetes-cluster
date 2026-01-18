@@ -1,0 +1,76 @@
+# =============================================================================
+# INGRESS - MinIO
+# =============================================================================
+# Expone MinIO Console y API a internet
+# - Console: https://minio.smartperu.tech (UI Web)
+# - API S3:  https://s3.smartperu.tech (Endpoint S3 para Pulumi y apps)
+# SSL/TLS automatico con cert-manager (Let's Encrypt)
+# =============================================================================
+
+---
+# Ingress para MinIO Console (UI Web)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-console
+  namespace: minio
+  labels:
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/component: console
+    app.kubernetes.io/part-of: minio
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - minio.smartperu.tech
+      secretName: minio-console-tls
+  rules:
+    - host: minio.smartperu.tech
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  name: console
+
+---
+# Ingress para MinIO API S3 (para Pulumi, AWS CLI, etc)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-api
+  namespace: minio
+  labels:
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: minio
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    # Headers importantes para compatibilidad S3
+    traefik.ingress.kubernetes.io/custom-request-headers: "X-Forwarded-Proto:https"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - s3.smartperu.tech
+      secretName: minio-api-tls
+  rules:
+    - host: s3.smartperu.tech
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  name: api

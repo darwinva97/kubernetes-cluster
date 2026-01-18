@@ -1,0 +1,24 @@
+# =============================================================================
+# KUSTOMIZATION - MinIO
+# =============================================================================
+# MinIO Object Storage - S3 Compatible
+# Usado para backend de Pulumi state y almacenamiento general
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: minio
+
+resources:
+  - namespace.yaml
+  - secrets.yaml
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/name: minio
+  app.kubernetes.io/part-of: minio
+  app.kubernetes.io/managed-by: argocd

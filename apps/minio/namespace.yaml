@@ -1,0 +1,17 @@
+# =============================================================================
+# NAMESPACE - MinIO
+# =============================================================================
+# Namespace dedicado para MinIO Object Storage
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: minio
+  labels:
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/managed-by: argocd
+  annotations:
+    description: "MinIO Object Storage - S3 compatible"
