@@ -1,0 +1,20 @@
+# =============================================================================
+# NAMESPACE - Sealed Secrets (placeholder)
+# =============================================================================
+# El controller se instala via Helm en kube-system
+# Este archivo existe para que kustomization.yaml tenga algo que referenciar
+# =============================================================================
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sealed-secrets-info
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: sealed-secrets
+    app.kubernetes.io/managed-by: argocd
+data:
+  info: |
+    Sealed Secrets Controller instalado via Helm.
+    Para sellar secretos usar: kubeseal --controller-name=sealed-secrets --controller-namespace=kube-system

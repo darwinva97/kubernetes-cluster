@@ -200,6 +200,58 @@ spec:
 
 ---
 # =============================================================================
+# INFRAESTRUCTURA - Sealed Secrets (Helm)
+# =============================================================================
+# Permite encriptar secretos que pueden guardarse en Git publico
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sealed-secrets
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: infra
+    app.kubernetes.io/part-of: gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://bitnami-labs.github.io/sealed-secrets
+    chart: sealed-secrets
+    targetRevision: 2.14.2
+    helm:
+      values: |
+        fullnameOverride: sealed-secrets
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+---
+# =============================================================================
 # INFRAESTRUCTURA - Cert-Manager Issuers
 # =============================================================================
 apiVersion: argoproj.io/v1alpha1
@@ -639,6 +691,54 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: minio
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+
+---
+# =============================================================================
+# INFRAESTRUCTURA - Docker Registry
+# =============================================================================
+# Registry privado para imagenes de contenedores
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: docker-registry
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: infra
+    app.kubernetes.io/part-of: gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: git@github.com:darwinva97/kubernetes-cluster.git
+    targetRevision: main
+    path: apps/docker-registry
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: docker-registry
 
   syncPolicy:
     automated:

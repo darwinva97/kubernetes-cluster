@@ -1,0 +1,17 @@
+# =============================================================================
+# NAMESPACE - Docker Registry
+# =============================================================================
+# Namespace dedicado para Docker Registry privado
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: docker-registry
+  labels:
+    app.kubernetes.io/name: docker-registry
+    app.kubernetes.io/component: registry
+    app.kubernetes.io/managed-by: argocd
+  annotations:
+    description: "Docker Registry privado"

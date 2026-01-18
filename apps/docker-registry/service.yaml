@@ -1,0 +1,25 @@
+# =============================================================================
+# SERVICE - Docker Registry
+# =============================================================================
+# Expone Docker Registry dentro del cluster
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docker-registry
+  namespace: docker-registry
+  labels:
+    app.kubernetes.io/name: docker-registry
+    app.kubernetes.io/component: registry
+    app.kubernetes.io/part-of: docker-registry
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: docker-registry
+  ports:
+    - name: http
+      port: 5000
+      targetPort: http
+      protocol: TCP

@@ -130,3 +130,156 @@ mc alias set myminio https://s3.smartperu.tech minioadmin minio-secret-2024-k3s
 mc ls myminio
 mc mb myminio/pulumi-state
 ```
+
+## Docker Registry - Registro Privado de Imagenes
+
+El cluster incluye un Docker Registry privado con autenticacion HTTP Basic.
+
+### URL de Acceso
+
+| URL | Uso |
+|-----|-----|
+| `https://docker-registry.smartperu.tech` | Registry API (push/pull) |
+
+### Configurar Autenticacion (Primera vez)
+
+El registry usa Sealed Secrets para almacenar las credenciales de forma segura en Git.
+
+```bash
+# 1. Instalar kubeseal (si no lo tienes)
+# macOS
+brew install kubeseal
+# Linux
+wget https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.24.5/kubeseal-0.24.5-linux-amd64.tar.gz
+tar -xvzf kubeseal-*.tar.gz kubeseal && sudo mv kubeseal /usr/local/bin/
+
+# 2. Instalar htpasswd (si no lo tienes)
+# macOS: viene con apache
+# Linux: sudo apt-get install apache2-utils
+
+# 3. Generar htpasswd con tu usuario y password
+htpasswd -Bbn admin tu-password-seguro > htpasswd
+
+# 4. Crear secret temporal
+kubectl create secret generic registry-htpasswd \
+  --namespace=docker-registry \
+  --from-file=htpasswd \
+  --dry-run=client -o yaml > secret.yaml
+
+# 5. Sellar el secret (requiere acceso al cluster)
+kubeseal --controller-name=sealed-secrets \
+  --controller-namespace=kube-system \
+  --format yaml < secret.yaml > sealed-secret.yaml
+
+# 6. Copiar el contenido de sealed-secret.yaml a apps/docker-registry/secrets.yaml
+
+# 7. Limpiar archivos temporales
+rm htpasswd secret.yaml sealed-secret.yaml
+
+# 8. Commit y push
+git add apps/docker-registry/secrets.yaml
+git commit -m "feat: add sealed secret for docker registry auth"
+git push
+```
+
+### Uso con Docker
+
+```bash
+# Login al registry (usar las credenciales que configuraste)
+docker login docker-registry.smartperu.tech
+# Username: admin
+# Password: tu-password-seguro
+
+# Tag de imagen local
+docker tag mi-app:latest docker-registry.smartperu.tech/mi-app:latest
+
+# Push al registry
+docker push docker-registry.smartperu.tech/mi-app:latest
+
+# Pull desde el registry
+docker pull docker-registry.smartperu.tech/mi-app:latest
+```
+
+### Uso en Kubernetes
+
+Para usar imagenes del registry privado, primero crear un imagePullSecret:
+
+```bash
+# Crear secret para pull de imagenes
+kubectl create secret docker-registry regcred \
+  --docker-server=docker-registry.smartperu.tech \
+  --docker-username=admin \
+  --docker-password=tu-password-seguro \
+  --namespace=tu-namespace
+```
+
+Luego usarlo en deployments:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mi-app
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: mi-app
+          image: docker-registry.smartperu.tech/mi-app:latest
+```
+
+### Listar imagenes disponibles
+
+```bash
+# Listar repositorios (requiere autenticacion)
+curl -u admin:tu-password https://docker-registry.smartperu.tech/v2/_catalog
+
+# Listar tags de un repositorio
+curl -u admin:tu-password https://docker-registry.smartperu.tech/v2/mi-app/tags/list
+```
+
+## Sealed Secrets - Secretos Encriptados en Git
+
+El cluster usa Bitnami Sealed Secrets para almacenar secretos de forma segura en repositorios publicos.
+
+### Como funciona
+
+1. **Sealed Secrets Controller** corre en el cluster y tiene una llave privada
+2. **kubeseal** CLI encripta secretos con la llave publica del cluster
+3. Solo el cluster puede descifrar los SealedSecrets
+4. Los SealedSecrets encriptados pueden guardarse en Git publico
+
+### Crear un SealedSecret
+
+```bash
+# 1. Crear un secret normal (dry-run)
+kubectl create secret generic mi-secret \
+  --from-literal=password=mi-valor-secreto \
+  --namespace=mi-namespace \
+  --dry-run=client -o yaml > secret.yaml
+
+# 2. Sellar el secret
+kubeseal --controller-name=sealed-secrets \
+  --controller-namespace=kube-system \
+  --format yaml < secret.yaml > sealed-secret.yaml
+
+# 3. Aplicar o agregar a Git
+kubectl apply -f sealed-secret.yaml
+# O agregarlo al repositorio GitOps
+
+# 4. Limpiar
+rm secret.yaml
+```
+
+### Obtener la llave publica (para uso offline)
+
+```bash
+kubeseal --controller-name=sealed-secrets \
+  --controller-namespace=kube-system \
+  --fetch-cert > sealed-secrets-cert.pem
+
+# Usar offline
+kubeseal --cert sealed-secrets-cert.pem --format yaml < secret.yaml > sealed-secret.yaml
+```

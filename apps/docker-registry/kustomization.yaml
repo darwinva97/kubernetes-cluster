@@ -1,0 +1,23 @@
+# =============================================================================
+# KUSTOMIZATION - Docker Registry
+# =============================================================================
+# Docker Registry privado para imagenes de contenedores
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: docker-registry
+
+resources:
+  - namespace.yaml
+  - secrets.yaml
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/name: docker-registry
+  app.kubernetes.io/part-of: docker-registry
+  app.kubernetes.io/managed-by: argocd

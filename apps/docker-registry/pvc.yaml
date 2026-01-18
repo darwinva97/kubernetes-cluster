@@ -1,0 +1,23 @@
+# =============================================================================
+# PERSISTENT VOLUME CLAIM - Docker Registry
+# =============================================================================
+# Storage persistente para imagenes de Docker
+# =============================================================================
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: registry-data
+  namespace: docker-registry
+  labels:
+    app.kubernetes.io/name: docker-registry
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: docker-registry
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 50Gi

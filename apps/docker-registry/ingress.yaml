@@ -1,0 +1,42 @@
+# =============================================================================
+# INGRESS - Docker Registry
+# =============================================================================
+# Expone Docker Registry a internet
+# URL: https://docker-registry.smartperu.tech
+# SSL/TLS automatico con cert-manager (Let's Encrypt)
+# =============================================================================
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: docker-registry
+  namespace: docker-registry
+  labels:
+    app.kubernetes.io/name: docker-registry
+    app.kubernetes.io/component: registry
+    app.kubernetes.io/part-of: docker-registry
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    # Aumentar limite de body para push de imagenes grandes
+    traefik.ingress.kubernetes.io/buffering.maxRequestBodyBytes: "0"
+    traefik.ingress.kubernetes.io/buffering.memRequestBodyBytes: "0"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - docker-registry.smartperu.tech
+      secretName: docker-registry-tls
+  rules:
+    - host: docker-registry.smartperu.tech
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: docker-registry
+                port:
+                  name: http

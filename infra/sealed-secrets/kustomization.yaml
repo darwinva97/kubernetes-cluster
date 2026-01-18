@@ -1,0 +1,13 @@
+# =============================================================================
+# KUSTOMIZATION - Sealed Secrets
+# =============================================================================
+# Bitnami Sealed Secrets para encriptar secretos en Git
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: kube-system
+
+resources:
+  - namespace.yaml
